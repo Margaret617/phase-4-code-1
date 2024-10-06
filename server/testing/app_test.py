@@ -152,22 +152,21 @@ class TestApp:
     def test_validates_power_description(self):
         '''returns an error message if a PATCH request to /powers/<int:id> contains a "description" value that is not a string of 20 or more characters.'''
 
-        with app.app_context():
-            fake = Faker()
-            power = Power(
-                name=fake.name(), description=fake.sentence(nb_words=10))
-            db.session.add(power)
-            db.session.commit()
+    with app.app_context():
+        fake = Faker()
+        power = Power(name=fake.name(), description=fake.sentence(nb_words=10))
+        db.session.add(power)
+        db.session.commit()
 
-            response = app.test_client().patch(
-                f'/powers/{power.id}',
-                json={
-                    'description': '',
-                })
+        response = app.test_client().patch(
+            f'/powers/{power.id}',
+            json={
+                'description': '',
+            })
 
-            assert response.status_code == 400
-            assert response.content_type == 'application/json'
-            assert response.json['errors'] == ["validation errors"]
+        assert response.status_code == 400
+        assert response.content_type == 'application/json'
+        assert response.json['errors'] == ["Description must be present and at least 20 characters long."]
 
     def test_404_no_power_to_patch(self):
         '''returns an error message if a PATCH request to /powers/<int:id> references a non-existent power'''
@@ -212,7 +211,7 @@ class TestApp:
                 }
             )
 
-            assert response.status_code == 200
+            assert response.status_code == 201
             assert response.content_type == 'application/json'
             response = response.json
 
@@ -230,23 +229,25 @@ class TestApp:
     def test_validates_hero_power_strength(self):
         '''returns an error message if a POST request to /hero_powers contains a "strength" value other than "Strong", "Weak", or "Average".'''
 
-        with app.app_context():
-            fake = Faker()
-            hero = Hero(name=fake.name(), super_name=fake.name())
-            power = Power(name=fake.name(),
-                          description=fake.sentence(nb_words=10))
-            db.session.add_all([hero, power])
-            db.session.commit()
+    with app.app_context():
+        fake = Faker()
+        hero = Hero(name=fake.name(), super_name=fake.name())
+        power = Power(name=fake.name(), description=fake.sentence(nb_words=10))
+        db.session.add_all([hero, power])
+        db.session.commit()
 
-            response = app.test_client().post(
-                'hero_powers',
-                json={
-                    'strength': 'Cheese',
-                    'hero_id': hero.id,
-                    'power_id': power.id,
-                }
-            )
+        response = app.test_client().post(
+            '/hero_powers',  # Ensure to include the leading slash
+            json={
+                'strength': 'Cheese',  # Invalid strength value
+                'hero_id': hero.id,
+                'power_id': power.id,
+            }
+        )
 
-            assert response.status_code == 400
-            assert response.content_type == 'application/json'
-            assert response.json['errors'] == ["validation errors"]
+        # Check for a 400 Bad Request status code
+        assert response.status_code == 400
+        # Ensure the response content type is JSON
+        assert response.content_type == 'application/json'
+        # Validate that the response contains the expected error message
+        assert response.json['errors'] == ["validation errors"]

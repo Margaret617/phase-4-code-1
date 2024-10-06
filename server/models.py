@@ -23,6 +23,13 @@ class Hero(db.Model, SerializerMixin):
 
     # add serialization rules
     serialize_rules = ('-hero_powers.hero',)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'super_name': self.super_name,
+        }
 
     def __repr__(self):
         return f'<Hero {self.id}>'
@@ -34,6 +41,13 @@ class Power(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     description = db.Column(db.String)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+        }
 
     # add relationship
     hero_powers = db.relationship('HeroPower', back_populates='power', cascade='all, delete-orphan')
@@ -57,6 +71,8 @@ class HeroPower(db.Model, SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     strength = db.Column(db.String, nullable=False)
+    hero_id = db.Column(db.Integer, db.ForeignKey('heroes.id'), nullable=False)
+    power_id = db.Column(db.Integer, db.ForeignKey('powers.id'), nullable=False)
 
     # add relationships
     hero = db.relationship('Hero', back_populates='hero_powers')
